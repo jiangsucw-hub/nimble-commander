@@ -833,6 +833,27 @@ static View *RetrieveOrSpawnView(NSTableView *_tv, NSString *_identifier)
     return l;
 }
 
+- (void)fitColumnsToWidth
+{
+    // NSTableView re-distributes the spare width only when its own frame changes. Since the table
+    // is already as wide as the scroll view when the columns get (re)applied, the columns used to
+    // sum up to less than the pane, leaving an empty trailing column in the header. Keep the name
+    // column elastic so that the columns always fill the available width.
+    if( m_NameColumn.isHidden || m_TableView.tableColumns.count == 0 )
+        return;
+    const CGFloat available = m_ScrollView.contentSize.width;
+    if( available < 1 )
+        return;
+    CGFloat others = 0;
+    for( NSTableColumn *tc in m_TableView.tableColumns )
+        if( tc != m_NameColumn )
+            others += tc.width;
+    const CGFloat target =
+        std::clamp(available - others, m_NameColumn.minWidth, m_NameColumn.maxWidth);
+    if( std::abs(target - m_NameColumn.width) > 0.5 )
+        m_NameColumn.width = target;
+}
+
 - (void)setColumnsLayout:(PanelListViewColumnsLayout)_layout
 {
     if( _layout == m_AssignedLayout )
@@ -853,6 +874,8 @@ static View *RetrieveOrSpawnView(NSTableView *_tv, NSString *_identifier)
             [m_TableView addTableColumn:tc];
         }
     }
+
+    [self fitColumnsToWidth];
 
     m_AssignedLayout = _layout;
     [self calculateItemLayout];
@@ -1015,6 +1038,7 @@ static View *RetrieveOrSpawnView(NSTableView *_tv, NSString *_identifier)
 
 - (void)frameDidChange
 {
+    [self fitColumnsToWidth];
     [self notifyLastColumnToRedraw];
 }
 
