@@ -59,14 +59,14 @@ jobs:
             exit 1
           fi
           echo "packaging: $APP"
-          ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/NimbleCommander-Unsigned.zip"
+          ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/NimbleCommander.zip"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: NimbleCommander-Unsigned
+          name: NimbleCommander
           path: |
-            ${{ runner.temp }}/NimbleCommander-Unsigned.zip
+            ${{ runner.temp }}/NimbleCommander.zip
             ${{ runner.temp }}/build.log
           retention-days: 14
           if-no-files-found: warn
