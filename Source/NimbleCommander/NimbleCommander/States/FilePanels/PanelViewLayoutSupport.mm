@@ -251,9 +251,9 @@ const std::shared_ptr<const PanelViewLayout> PanelViewLayoutsStorage::DefaultLay
 
 int PanelViewLayoutsStorage::DefaultLayoutIndex() const
 {
-    // This build defaults to the Gallery presentation: large icons with the file name below them.
-    // Fall back to the built-in icon (brief) layouts when Gallery is missing or disabled.
-    const int order[] = { 4, 1, 0 };
+    // This build defaults to the list presentation (Full), falling back to the wide list and
+    // finally to the icon layouts when the list ones are missing or disabled.
+    const int order[] = { 2, 3, 1, 0 };
     for( const int i : order )
         if( const auto l = GetLayout(i) )
             if( !l->is_disabled() )
