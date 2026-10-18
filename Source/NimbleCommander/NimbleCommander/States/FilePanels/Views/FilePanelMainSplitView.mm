@@ -22,6 +22,7 @@ static constexpr double g_DividerThickness = 1.;
     nc::ThemesManager::ObservationTicket m_ThemeChangesObservation;
     double m_PreCollapseProp; // full width minus divider divided by left width
     const nc::utility::ActionsShortcutsManager *m_ActionsShortcutsManager;
+    bool m_DidApplyDefaultLayout;
 }
 
 - (id)initWithFrame:(NSRect)_frame
@@ -84,6 +85,22 @@ static constexpr double g_DividerThickness = 1.;
     // Without this adjustment the subviews sometimes end up with .5 coords when switching between
     // Retina and non-Retina.
     [self adjustSubviews];
+}
+
+- (void)viewDidMoveToWindow
+{
+    [super viewDidMoveToWindow];
+
+    if( self.window == nil || m_DidApplyDefaultLayout )
+        return;
+    m_DidApplyDefaultLayout = true;
+
+    // Single-pane is the default layout: collapse the right panel once, after the initial layout
+    // has been performed. Toggling is still available via View > Toggle Single-Pane Mode (⇧⌘P).
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if( self.window != nil && !self.anyCollapsed )
+            [self collapseRightView];
+    });
 }
 
 - (void)adjustSubviews

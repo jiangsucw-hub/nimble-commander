@@ -9,7 +9,6 @@
 #include "VFSInit.h"
 #include "Interactions.h"
 #include "NCHelpMenuDelegate.h"
-#include "SparkleShim.h"
 #include "PFMoveToApplicationsShim.h"
 #include "NativeVFSHostInstance.h"
 #include "Actions.h"
@@ -396,13 +395,7 @@ static NCAppDelegate *g_Me = nil;
 
     // Non-MAS version extended logic below:
     if( !nc::base::AmISandboxed() ) {
-        // setup Sparkle updater stuff
-        NSMenuItem *item = [[NSMenuItem alloc] init];
-        item.title = NSLocalizedString(@"Check for Updates...",
-                                       "Menu item title for check if any Nimble Commander updates are available");
-        item.target = NCBootstrapSharedSUUpdaterInstance();
-        item.action = NCBootstrapSUUpdaterAction();
-        [[NSApp.mainMenu itemAtIndex:0].submenu insertItem:item atIndex:1];
+        // The updater/upgrade module (Sparkle) is intentionally disabled in this build.
 
         if( GlobalConfig().GetBool(g_ConfigForceFn) )
             nc::utility::FunctionalKeysPass::Instance().Enable(); // accessibility - remapping functional keys FnXX
