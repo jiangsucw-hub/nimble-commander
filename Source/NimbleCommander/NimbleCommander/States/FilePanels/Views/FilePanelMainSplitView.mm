@@ -108,9 +108,27 @@ static constexpr double g_DividerThickness = 1.;
     [super adjustSubviews];
 
     NSArray<__kindof NSView *> *subviews = self.subviews;
-    if( subviews.count < 2 ||                    //
-        [self isSubviewCollapsed:subviews[0]] || //
-        [self isSubviewCollapsed:subviews[1]] )
+    if( subviews.count < 2 )
+        return;
+
+    NSView *const left_view = [subviews objectAtIndex:0];
+    NSView *const right_view = [subviews objectAtIndex:1];
+
+    // Single-pane mode: whenever one of the panes is collapsed, the visible pane must own the
+    // whole width. NSSplitView re-distributes the space on every resize, which used to leave the
+    // collapsed pane with a blank half of the window whenever the layout happened after the
+    // collapse (e.g. the default single-pane layout applied at startup).
+    if( left_view.hidden != right_view.hidden ) {
+        NSView *const visible_view = right_view.hidden ? left_view : right_view;
+        const NSRect bounds = self.bounds;
+        const NSRect frame = visible_view.frame;
+        if( std::abs(frame.size.width - bounds.size.width) > 0.5 || frame.origin.x != 0 ) {
+            visible_view.frame = NSMakeRect(0, frame.origin.y, bounds.size.width, frame.size.height);
+        }
+        return;
+    }
+
+    if( [self isSubviewCollapsed:subviews[0]] || [self isSubviewCollapsed:subviews[1]] )
         return;
 
     if( NSView *left = [subviews objectAtIndex:0] ) {
