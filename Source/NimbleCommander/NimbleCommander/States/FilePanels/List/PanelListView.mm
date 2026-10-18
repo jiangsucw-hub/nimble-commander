@@ -158,6 +158,14 @@ static NSString *ToKindIdentifier(PanelListViewColumns _kind) noexcept;
                                                selector:@selector(frameDidChange)
                                                    name:NSViewFrameDidChangeNotification
                                                  object:self];
+        // A frame change of the panel arrives before the scroll view gets resized, so the width
+        // read there is stale. The clip view is the one that actually defines how much room the
+        // columns have, hence watch it as well.
+        m_ScrollView.contentView.postsFrameChangedNotifications = true;
+        [NSNotificationCenter.defaultCenter addObserver:self
+                                               selector:@selector(clipViewFrameDidChange)
+                                                   name:NSViewFrameDidChangeNotification
+                                                 object:m_ScrollView.contentView];
         [NSNotificationCenter.defaultCenter addObserver:self
                                                selector:@selector(dateDidChange:)
                                                    name:NSCalendarDayChangedNotification
@@ -852,6 +860,11 @@ static View *RetrieveOrSpawnView(NSTableView *_tv, NSString *_identifier)
         std::clamp(available - others, m_NameColumn.minWidth, m_NameColumn.maxWidth);
     if( std::abs(target - m_NameColumn.width) > 0.5 )
         m_NameColumn.width = target;
+}
+
+- (void)clipViewFrameDidChange
+{
+    [self fitColumnsToWidth];
 }
 
 - (void)setColumnsLayout:(PanelListViewColumnsLayout)_layout
