@@ -19,9 +19,24 @@ jobs:
           xcodebuild -showsdks | head -20
           uname -m
 
+      - name: Resolve product path
+        id: product
+        working-directory: Source/NimbleCommander
+        run: |
+          xcodebuild \
+            -project NimbleCommander.xcodeproj \
+            -scheme NimbleCommander-Unsigned \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            -showBuildSettings 2>/dev/null |
+            grep -E "^\s*(BUILT_PRODUCTS_DIR|FULL_PRODUCT_NAME|PRODUCT_NAME|CONFIGURATION_BUILD_DIR|SYMROOT) =" |
+            sort -u
+
       - name: Build (unsigned)
         working-directory: Source/NimbleCommander
         run: |
+          set -o pipefail
           xcodebuild \
             -project NimbleCommander.xcodeproj \
             -scheme NimbleCommander-Unsigned \
@@ -31,12 +46,19 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build | tee "$RUNNER_TEMP/build.log" | tail -200
+            build 2>&1 | tee "$RUNNER_TEMP/build.log" | tail -300
 
       - name: Package
         run: |
-          APP="$RUNNER_TEMP/dd/Build/Products/Release/NimbleCommander-Unsigned.app"
-          ls -la "$(dirname "$APP")"
+          echo "--- products tree ---"
+          ls -la "$RUNNER_TEMP/dd/Build/Products/Release" || true
+          APP=$(find "$RUNNER_TEMP/dd/Build/Products" -maxdepth 3 -name "*.app" -type d | head -1)
+          if [ -z "$APP" ]; then
+            echo "::error::No .app bundle produced"
+            find "$RUNNER_TEMP/dd/Build/Products" -maxdepth 2 | head -50
+            exit 1
+          fi
+          echo "packaging: $APP"
           ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/NimbleCommander-Unsigned.zip"
 
       - uses: actions/upload-artifact@v4
